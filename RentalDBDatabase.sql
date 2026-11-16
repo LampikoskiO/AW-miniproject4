@@ -1,11 +1,12 @@
-	
+use master;
+go
 
 drop database rentaldb;
 go
 Create Database RentalDB;
 go
 
-USE database RentalDB;
+USE RentalDB;
 go
 	
 CREATE TABLE Category
