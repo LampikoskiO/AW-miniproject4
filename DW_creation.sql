@@ -50,7 +50,7 @@ create table DimEmployee (
 );
 
 create table DimDate (
-	date_key		int identity	NOT NULL constraint PK_date_ket primary key,
+	date_key		int identity	NOT NULL constraint PK_date_key primary key,
 	date			date			NOT NULL,
 	day				int				NOT NULL,
 	month			int				NOT NULL,
