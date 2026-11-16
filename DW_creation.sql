@@ -31,19 +31,19 @@ create table DimCustomer (
 )
 
 create table DimEmployee (
-Employee_key	int				NOT NULL constraint PK_employee_key primary key,
-employee_id		int				NOT NULL,
-first_name		nvarchar(50)	NOT NULL,
-last_name		nvarchar(50)	NOT NULL
+	Employee_key	int				NOT NULL constraint PK_employee_key primary key,
+	employee_id		int				NOT NULL,
+	first_name		nvarchar(50)	NOT NULL,
+	last_name		nvarchar(50)	NOT NULL
 );
 
 create table DimDate (
-date_key		int				NOT NULL constraint PK_date_ket primary key,
-date			date			NOT NULL,
-day				int				NOT NULL,
-month			int				NOT NULL,
-month_name		nvarchar(50)	NOT NULL,
-year			int				NOT NULL
+	date_key		int				NOT NULL constraint PK_date_ket primary key,
+	date			date			NOT NULL,
+	day				int				NOT NULL,
+	month			int				NOT NULL,
+	month_name		nvarchar(50)	NOT NULL,
+	year			int				NOT NULL
 );
 
 create table FactRentalLine (
@@ -60,6 +60,13 @@ create table FactRentalLine (
 	datetime_start	datetime	not null,
 	datetime_end	datetime	not null,
 	rental_time_minutes	int		not null,
-)
+);
 
-
+alter table FactRentalLine
+add constraint	FK_customer_key foreign key (customer_key) references DimCustomer(customer_key),
+	constraint	FK_employee_key foreign key (employee_key) references DimEmployee(employee_key),
+	constraint	FK_model_key foreign key (model_key) references DimModel(model_key),
+	constraint	FK_start_date_key foreign key (start_date_key) references DimDate(date_key),
+	constraint	FK_end_date_key foreign key (end_date_key) references DimDate(date_key),
+	constraint	FK_pickup_station_key foreign key (pickup_station_key) references DimRentalStation(rental_station_key),
+	constraint	FK_return_station_key foreign key (return_station_key) references DimRentalStation(rental_station_key);
