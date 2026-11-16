@@ -71,5 +71,12 @@ BEGIN
 END
 GO
 
+DECLARE @StartDate date, @EndDate date
+
+SELECT @StartDate = CAST(MIN(start_date) AS date),
+       @EndDate   = CAST(MAX(end_date)   AS date)
+FROM dbo.RENTAL
+
 EXEC dbo.RebuildDimDate @StartDate = @StartDate, @EndDate = @EndDate
+
 SELECT COUNT(*) AS date_count FROM dbo.DimDate
