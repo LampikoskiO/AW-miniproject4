@@ -1,14 +1,13 @@
 use RentalDB;
 go
 
--- insert into FactRentalLine
+insert into FactRentalLine
 select r.rental_id, rental_line_no, customer_key, employee_key, model_key,
 	CONVERT(int, CONVERT(char(8), start_Date, 112)) as start_date_key, 
 	CONVERT(int, CONVERT(char(8), end_date, 112)) as end_date_key,
-	drs1.rental_station_key as pickup_station_key, 
-	drs2.rental_station_key as return_station_key, 
-	price,
-	0 as VAT, -- change that !
+	drs1.rental_station_key as pickup_station_key,
+	drs2.rental_station_key as return_station_key,
+	price, VAT,
 	start_date as datetime_start, end_date as datetime_end, 
 	payment_method,
 	(DATEDIFF(MINUTE, start_date, end_date)) as rental_time_minutes
