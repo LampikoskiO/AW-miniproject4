@@ -4,7 +4,7 @@ GO
 
 SET LANGUAGE us_english
 
-INSERT INTO dbo.DimDate ([date], [day], [month], month_name, [year])
+INSERT INTO dbo.DimDate ([date], [day], [month], month_name, [year])    -- this is still missing date_key
 SELECT date,
        DAY(d),
        MONTH(d),
@@ -47,8 +47,9 @@ BEGIN
         DECLARE @CurrentDate date = @StartDate
         WHILE @CurrentDate <= @EndDate                                              -- we loop through all the dates in the date range and fill them into the table
         BEGIN
-            INSERT INTO dbo.DimDate ([date], [day], [month], month_name, [year])
+            INSERT INTO dbo.DimDate (date_key, [date], [day], [month], month_name, [year]) 
             VALUES (
+                CONVERT(int, CONVERT(char(8), @CurrentDate, 112)),   -- 8 digit number YYYYMMDD key
                 @CurrentDate,
                 DAY(@CurrentDate),
                 MONTH(@CurrentDate),
