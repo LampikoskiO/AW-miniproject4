@@ -1,44 +1,48 @@
--- use database
+--create database RentalDB;
+
+use RentalDB;
+
+go
 
 create table DimRentalStation (
-	rental_station_key	int			constraint PK_rental_station_key Primary key,
+	rental_station_key	int identity	constraint PK_rental_station_key Primary key,
 	rental_station_id	int	not null,
 	station_name	nvarchar(50)	not null,
 	address			nvarchar(100)	not null,
 	city			nvarchar(50)	not null,
 	country			nvarchar(50)	not null,
-	station_type	nvarchar(10)	not null,
-)
+	station_type	nvarchar(50)	not null,
+);
 
 create table DimModel (
-	model_key			int			constraint PK_model_key	primary key,
+	model_key			int identity	constraint PK_model_key	primary key,
 	model_id			int	not null,
 	brand_name			nvarchar(50)	not null,
 	model_name			nvarchar(50)	not null,
 	subcategory_name	nvarchar(50)	not null,
 	category_name		nvarchar(50)	not null
-)
+);
 
 create table DimCustomer (
-	customer_key		int			constraint PK_customer_key primary key,
-	first_name		nvarchar(20)	not null,
-	last_name		nvarchar(20)	not null,
+	customer_key		int	identity	constraint PK_customer_key primary key,
+	first_name		nvarchar(50)	not null,
+	last_name		nvarchar(50)	not null,
 	address			nvarchar(100)	not null,
 	city			nvarchar(50)	not null,
 	country			nvarchar(50)	not null,
 	email			nvarchar(60)	not null,
-	phone_number	nvarchar(12)	not null,
-)
+	phone_number	nvarchar(15)	not null,
+);
 
 create table DimEmployee (
-	Employee_key	int				NOT NULL constraint PK_employee_key primary key,
+	Employee_key	int	identity	NOT NULL constraint PK_employee_key primary key,
 	employee_id		int				NOT NULL,
 	first_name		nvarchar(50)	NOT NULL,
 	last_name		nvarchar(50)	NOT NULL
 );
 
 create table DimDate (
-	date_key		int				NOT NULL constraint PK_date_ket primary key,
+	date_key		int identity	NOT NULL constraint PK_date_ket primary key,
 	date			date			NOT NULL,
 	day				int				NOT NULL,
 	month			int				NOT NULL,
@@ -47,7 +51,8 @@ create table DimDate (
 );
 
 create table FactRentalLine (
-	rental_line_key		int			constraint PK_customer_key primary key,
+	rental_id		int,
+	rental_line_no	int,
 	customer_key		int	not null,
 	employee_key		int		null,
 	model_key			int	not null,
@@ -61,8 +66,10 @@ create table FactRentalLine (
 	datetime_end	datetime	not null,
 	payment_method  nvarchar(50) not null,
 	rental_time_minutes	int		not null,
+	constraint  PK_rentaline_id primary key (rental_id, rental_line_no)
 );
 
+-- add foreign key after creating data ?
 alter table FactRentalLine
 add constraint	FK_customer_key foreign key (customer_key) references DimCustomer(customer_key),
 	constraint	FK_employee_key foreign key (employee_key) references DimEmployee(employee_key),
