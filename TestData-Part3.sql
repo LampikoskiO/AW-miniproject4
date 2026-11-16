@@ -1,4 +1,6 @@
 ﻿-- PART 3 - TEST DATA
+-- Seeds the whole RentalDB in one transaction. SET XACT_ABORT ON means any
+-- error rolls everything back, so the database is never left half-seeded.
 
 USE RentalDB;
 GO
@@ -6,9 +8,10 @@ SET NOCOUNT ON;
 SET XACT_ABORT ON;
 
 BEGIN TRY
-    BEGIN TRANSACTION;
+    BEGIN TRANSACTION;   -- everything below is all-or-nothing
 
-    -- Protect existing work. The script is intentionally one-time seed data.
+    -- Guard against double-seeding: if ANY table already has rows, stop here so
+    -- the script cannot create duplicates. Run it only on freshly created tables.
     IF EXISTS (SELECT 1 FROM dbo.Category)
        OR EXISTS (SELECT 1 FROM dbo.SubCategory)
        OR EXISTS (SELECT 1 FROM dbo.Model)
@@ -29,6 +32,8 @@ BEGIN TRY
     (N'Scooter'),
     (N'Kickboard');
 
+    -- The data lists the category by NAME. The JOIN looks up its generated
+    -- Category_id, so we never hardcode id numbers. Same pattern for Model below.
     INSERT INTO dbo.SubCategory (Category_id, name)
     SELECT c.Category_id, d.SubCategoryName
     FROM (VALUES
@@ -57,6 +62,7 @@ BEGIN TRY
 
     -- Six physical units of each model: 7 models x 6 cities = 42 items.
     -- The lowest equipment_id for a model is city slot 1, and so on.
+    -- CROSS JOIN pairs every model with all 6 condition rows, giving 6 copies each.
     INSERT INTO dbo.EquipmentItem (model_id, [Condition])
     SELECT m.model_id, d.ItemCondition
     FROM dbo.Model AS m
@@ -114,7 +120,9 @@ BEGIN TRY
     (N'Aino', N'Laine'),
     (N'Olli', N'Virtanen');
 
-    -- 5. Staging for rental headers.
+    -- 5. Staging for rental headers. This temp table holds the rentals in a
+    -- human-readable form (names, emails, station names), which the INSERT further
+    -- down turns into real id references.
     -- RentalRef is only a seed-script label; it is NOT a database column.
     DECLARE @RentalSeed TABLE (
         RentalRef CHAR(4) NOT NULL PRIMARY KEY,
@@ -183,6 +191,10 @@ BEGIN TRY
         THROW 51001, 'Invalid channel, time, or return city in sample rentals.', 1;
     END;
 
+    -- Turn the staged rentals into real RENTAL rows: each JOIN resolves a name or
+    -- email into its generated id. The LEFT JOIN on employee keeps station rentals
+    -- (which have no employee), and the WHERE drops any row whose named employee
+    -- was not found.
     INSERT INTO dbo.RENTAL
         (customer_id, pickup_station_id, return_station_id, employee_id,
          start_date, end_date, payment_method)
@@ -258,8 +270,9 @@ BEGIN TRY
     (N'R035', 2, N'Metro E2', N'VoltWay', 62),
     (N'R036', 1, N'Urban Glide', N'FlowWheel', 11);
 
-    -- Each model has six physical units. RowNumber 1..6 assigns one to each
-    -- city, so the same physical item is reused only within its city.
+    -- Each model has six physical units. Each city gets a fixed slot number 1..6,
+    -- so a rental in Berlin always uses that model's Berlin copy. This keeps the
+    -- same physical item from being booked in two cities at once.
     DECLARE @CitySlot TABLE (
         City NVARCHAR(50) NOT NULL PRIMARY KEY,
         Country NVARCHAR(50) NOT NULL,
@@ -274,6 +287,8 @@ BEGIN TRY
     (N'Helsinki', N'Finland', 5),
     (N'Tampere', N'Finland', 6);
 
+    -- Number each model's 6 physical units 1..6 (SlotNo). The INSERT then matches
+    -- a rental line to the unit whose SlotNo equals its pickup city's slot.
     ;WITH EquipmentNumbered AS (
         SELECT ei.equipment_id, m.name AS ModelName, m.brand_name AS BrandName,
                ROW_NUMBER() OVER
@@ -305,11 +320,16 @@ BEGIN TRY
        AND eq.BrandName = ln.BrandName
        AND eq.SlotNo = cs.SlotNo;
 
+    -- Final integrity checks. Each THROW aborts and rolls back if the seeded data
+    -- is not internally consistent.
+    -- 51003: every seeded line must have been inserted (a count mismatch means a
+    -- join above failed to find a model or equipment slot).
     IF (SELECT COUNT(*) FROM dbo.RentalLine) <> (SELECT COUNT(*) FROM @RentalLineSeed)
     BEGIN
         THROW 51003, 'Rental line insert count mismatch: check models / equipment slots.', 1;
     END;
 
+    -- 51004: every rental must have at least one line.
     IF EXISTS (
         SELECT 1 FROM dbo.RENTAL AS r
         LEFT JOIN dbo.RentalLine AS rl ON rl.rental_id = r.rental_id
@@ -319,6 +339,9 @@ BEGIN TRY
         THROW 51004, 'A rental has no rental lines.', 1;
     END;
 
+    -- 51005: the same physical item must not be booked at overlapping times.
+    -- Pairs two lines sharing an equipment_id (l1.rental_id < l2.rental_id avoids
+    -- self-pairs and duplicates), then flags any pair whose time ranges overlap.
     IF EXISTS (
         SELECT 1
         FROM dbo.RentalLine AS l1

@@ -3,14 +3,14 @@
 use master;
 go
 
-drop database rentaldb;
+drop database rentaldb; -- drop it so we are always running this on a clean slate, no duplicates etc.. resets the database
 go
 Create Database RentalDB;
 go
 
 USE RentalDB;
 go
-	
+	-- making all the tables below for the operational database
 CREATE TABLE Category
 (
 	Category_id INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
@@ -110,7 +110,9 @@ CREATE TABLE RentalLine
 );
 
 
-
+-- Connecting the tables to eachother with foreign keys.
+-- First the item/equipment hierarchy (Category → SubCategory → Model → EquipmentItem)
+-- each category has subcategories which have models and each model has a physical item
 
 ---Subcategory -> Category
 Alter Table SubCategory
@@ -132,23 +134,32 @@ FOREIGN KEY (model_id)
 REFERENCES Model(model_id)
 
 
+-- all the rest of the tables and their connections to each other
+
 ---- Rental -> Customer
+-- every rental belongs to a customer
 Alter Table Rental
 ADD CONSTRAINT FK_Rental_Customer
 FOREIGN KEY (Customer_id)
 REFERENCES Customer(customer_id)
 go
+
 -- Rental --> Pickup station
+-- pickupstation needs to actually exist
 ALTER table rental
 add CONSTRAINT FK_Rental_PickStation
 FOREIGN KEY (pickup_station_id)
 REFERENCES RentalStation(rental_station_id)
+
 -->Rental --> return station
+--returnstation needs to actually exist
 ALTER TABLE rental
 ADD CONSTRAINT FK_Rental_ReturnStation
 FOREIGN KEY (return_station_id)
 REFERENCES RentalStation(rental_station_id)
+
 --Rental -> Employee
+--can be null since employee is  not always present for rentals
 ALTER TABLE RENTAL
 ADD CONSTRAINT FK_Rental_Employee
 FOREIGN KEY (employee_id)
@@ -156,11 +167,14 @@ REFERENCES Employee(employee_id)
 go
 
 --Rentalline --> Rental
+--every rentalline (order) has a rental_id
 Alter Table Rentalline
 ADD Constraint FK_RentalLine_rental
 FOREIGN KEY (rental_id)
 REFERENCES Rental(rental_id)
 
+--RentalLine.equipment_id → EquipmentItem
+--every row needs to have a physical item that is being rented
 Alter table Rentalline
 ADD CONSTRAINT FK_RentalLine_EquipmentItem
 FOREIGN KEY (equipment_id)

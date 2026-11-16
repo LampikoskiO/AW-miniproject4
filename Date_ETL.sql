@@ -1,27 +1,4 @@
--- simpler way to do it, but not reusable, no validation and makes gaps in the calendar.
-/*
-USE RentalDB
-GO
-
-SET LANGUAGE us_english
-
-INSERT INTO dbo.DimDate ([date], [day], [month], month_name, [year])    -- this is still missing date_key
-SELECT date,
-       DAY(d),
-       MONTH(d),
-       DATENAME(month, d),
-       YEAR(d)
-FROM (
-    SELECT CAST(start_date AS date) AS d FROM dbo.RENTAL --changing it from datetime to date with CAST
-    UNION 
-    SELECT CAST(end_date AS date)        FROM dbo.RENTAL --changing it from datetime to date with CAST
-) AS dates
-
-SELECT COUNT(*) AS date_count FROM dbo.DimDate
-
-*/
-
--- Better way to do this, according to labs 2.1C and lab 2.1B
+-- Better way to do this, according to labs 2.1C and lab 2.1B: reusable, validation and makes no gaps in the calendar.
 USE RentalDB
 GO
 
