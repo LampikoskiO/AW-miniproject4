@@ -30,9 +30,21 @@ create table DimCustomer (
 	phone_number	nvarchar(12)	not null,
 )
 
-create table DimEmployee ()
+create table DimEmployee (
+Employee_key	int				NOT NULL constraint PK_employee_key primary key,
+employee_id		int				NOT NULL,
+first_name		nvarchar(50)	NOT NULL,
+last_name		nvarchar(50)	NOT NULL
+);
 
-create table DimDate ()
+create table DimDate (
+date_key		int				NOT NULL constraint PK_date_ket primary key,
+date			date			NOT NULL,
+day				int				NOT NULL,
+month			int				NOT NULL,
+month_name		nvarchar(50)	NOT NULL,
+year			int				NOT NULL
+);
 
 create table FactRentalLine (
 	rental_line_key		int			constraint PK_customer_key primary key,
