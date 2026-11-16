@@ -59,6 +59,7 @@ create table FactRentalLine (
 	-- VAT			decimal(10,2)	not null, -- add to database ?
 	datetime_start	datetime	not null,
 	datetime_end	datetime	not null,
+	payment_method  nvarchar(50) not null,
 	rental_time_minutes	int		not null,
 )
 
