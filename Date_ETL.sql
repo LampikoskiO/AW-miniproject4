@@ -56,7 +56,7 @@ BEGIN
                 YEAR(@CurrentDate)
             )
 
-            SET @CurrentDate = DATEADD(day, 1, @CurrentDate)
+            SET @CurrentDate = DATEADD(day, 1, @CurrentDate) -- change the day
         END
 
         COMMIT TRANSACTION
