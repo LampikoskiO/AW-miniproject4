@@ -1,3 +1,5 @@
+use RentalDB;
+
 INSERT into DimRentalStation (
     rental_station_id,
     station_name,

@@ -1,3 +1,5 @@
+use RentalDB;
+
 INSERT INTO DimCustomer
 (
     customer_id,
