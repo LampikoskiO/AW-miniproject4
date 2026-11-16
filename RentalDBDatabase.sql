@@ -1,3 +1,5 @@
+-- part 1 make the DB
+
 use master;
 go
 
