@@ -1,8 +1,9 @@
+-- Use the RentalDB database for the model dimension load and validation.
 use RentalDB;
 go
 
--- insert
-
+-- Insert model data into the DimModel table.
+-- The source data is assembled from the Model, SubCategory, and Category tables.
 insert into DimModel
 select model_id, brand_name, m.name as model_name, sc.name as subcategory_name, c.name as category_name
 from Model as m 
@@ -13,10 +14,8 @@ on c.category_id = sc.category_id;
 
 go
 
--- validate
-
--- should return 0 rows
-
+-- Validate the load by checking whether the source data and the dimension are identical.
+-- This query should return 0 rows if the load was successful and no differences remain.
 select model_id, brand_name, m.name as model_name, sc.name as subcategory_name, c.name as category_name
 from Model as m 
 inner join SubCategory as sc

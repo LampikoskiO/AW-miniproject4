@@ -1,9 +1,14 @@
+-- Creates the data warehouse schema for the rental business domain.
+-- The script drops and recreates the warehouse tables so the model is rebuilt from scratch.
+-- This is a setup script and should be run only when a fresh schema is required.
+
 --create database RentalDB;
 
 use RentalDB;
 
 go
 
+-- Remove the existing fact table and dimension tables before rebuilding the schema.
 drop table FactRentalLine;
 drop table DimRentalStation;
 drop table DimModel;
@@ -11,6 +16,7 @@ drop table DimDate;
 drop table DimEmployee;
 drop table DimCustomer;
 
+-- Rental station dimension: stores static information about each rental station.
 create table DimRentalStation (
 	rental_station_key	int identity	constraint PK_rental_station_key Primary key,
 	rental_station_id	int	not null,
@@ -21,6 +27,7 @@ create table DimRentalStation (
 	station_type	nvarchar(50)	not null,
 );
 
+-- Vehicle model dimension: describes each model and the product hierarchy.
 create table DimModel (
 	model_key			int identity	constraint PK_model_key	primary key,
 	model_id			int	not null,
@@ -30,6 +37,7 @@ create table DimModel (
 	category_name		nvarchar(50)	not null
 );
 
+-- Customer dimension: contains the master data for all customers.
 create table DimCustomer (
 	customer_key		int	identity	constraint PK_customer_key primary key,
 	customer_id			int			not null,
@@ -42,6 +50,7 @@ create table DimCustomer (
 	phone_number	nvarchar(15)	not null,
 );
 
+-- Employee dimension: tracks the employees involved in rentals.
 create table DimEmployee (
 	Employee_key	int	identity	NOT NULL constraint PK_employee_key primary key,
 	employee_id		int				NOT NULL,
@@ -49,6 +58,7 @@ create table DimEmployee (
 	last_name		nvarchar(50)	NOT NULL
 );
 
+-- Date dimension: provides calendar attributes used for time analysis and reporting.
 create table DimDate (
 	date_key		int 			NOT NULL constraint PK_date_key primary key,
 	date			date			NOT NULL,
@@ -58,6 +68,8 @@ create table DimDate (
 	year			int				NOT NULL
 );
 
+-- Fact table: stores each rental line as a transactional fact record.
+-- It links to dimensions for customer, employee, vehicle model, dates, and stations.
 create table FactRentalLine (
 	rental_id		int,
 	rental_line_no	int,
@@ -77,7 +89,8 @@ create table FactRentalLine (
 	constraint  PK_rentaline_id primary key (rental_id, rental_line_no)
 );
 
--- add foreign key after creating data ?
+-- Add the foreign key constraints that connect each fact record to its dimension tables.
+-- These relationships enable analytical queries across customer, time, station, and model data.
 alter table FactRentalLine
 add constraint	FK_customer_key foreign key (customer_key) references DimCustomer(customer_key),
 	constraint	FK_employee_key foreign key (employee_key) references DimEmployee(employee_key),

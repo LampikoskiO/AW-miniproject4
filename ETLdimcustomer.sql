@@ -1,5 +1,8 @@
+-- Use the RentalDB database for the customer dimension ETL process.
 use RentalDB;
 
+-- Load only new customer records into the customer dimension.
+-- This prevents duplicate rows by checking whether the source customer_id already exists.
 INSERT INTO DimCustomer
 (
     customer_id,
@@ -28,4 +31,5 @@ WHERE NOT EXISTS
     WHERE c.customer_id = cr.customer_id
 );
 
+-- Display the current contents of the customer dimension for verification.
 SELECT * from dimcustomer

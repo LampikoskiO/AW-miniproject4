@@ -1,6 +1,10 @@
+-- Use the RentalDB database for the fact table load.
 use RentalDB;
 go
 
+-- Load rental transaction data into the fact table.
+-- The query joins the operational source tables to the corresponding dimension keys
+-- so each rental line can be analyzed by customer, employee, model, dates, and stations.
 insert into FactRentalLine
 select r.rental_id, rental_line_no, customer_key, employee_key, model_key,
 	CONVERT(int, CONVERT(char(8), start_Date, 112)) as start_date_key, 
