@@ -71,12 +71,12 @@ BEGIN
 END
 GO
 
-DECLARE @StartDate date, @EndDate date
+DECLARE @StartDate date, @EndDate date      --declaring startdate amd emddate
 
-SELECT @StartDate = CAST(MIN(start_date) AS date),
-       @EndDate   = CAST(MAX(end_date)   AS date)
+SELECT @StartDate = CAST(MIN(start_date) AS date),      -- read the lowest date straight from the data 
+       @EndDate   = CAST(MAX(end_date)   AS date)       -- read the highest date straight from the data
 FROM dbo.RENTAL
 
-EXEC dbo.RebuildDimDate @StartDate = @StartDate, @EndDate = @EndDate
+EXEC dbo.RebuildDimDate @StartDate = @StartDate, @EndDate = @EndDate    -- build/execute the dimension
 
 SELECT COUNT(*) AS date_count FROM dbo.DimDate
