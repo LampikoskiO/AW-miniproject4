@@ -1,3 +1,4 @@
+-- simpler way to do it, but not reusable, no validation and makes gaps in the calendar.
 /*
 USE RentalDB
 GO
@@ -33,20 +34,20 @@ BEGIN
     SET XACT_ABORT ON
 
     IF @StartDate IS NULL OR @EndDate IS NULL
-        THROW 51101, 'Start_date & End_date are both required.', 1
+        THROW 51101, 'Start_date & End_date are both required.', 1 -- we validate the input parameters, if they are null we throw an error
     IF @EndDate < @StartDate
         THROW 51102, 'End_date must not be before Start_date.', 1
 
     SET LANGUAGE us_english
 
     BEGIN TRY
-        BEGIN TRANSACTION
+        BEGIN TRANSACTION       -- transaction makes it so its all or nothing, if something fails it will roll back the changes and not leave the table half filled
 
         DELETE FROM dbo.DimDate
 
         DECLARE @CurrentDate date = @StartDate
         WHILE @CurrentDate <= @EndDate                                              -- we loop through all the dates in the date range and fill them into the table
-        BEGIN
+        BEGIN                                                                                       -- this also doesnt leave any gaps in the calendar
             INSERT INTO dbo.DimDate (date_key, [date], [day], [month], month_name, [year]) 
             VALUES (
                 CONVERT(int, CONVERT(char(8), @CurrentDate, 112)),   -- 8 digit number YYYYMMDD key
@@ -57,7 +58,7 @@ BEGIN
                 YEAR(@CurrentDate)
             )
 
-            SET @CurrentDate = DATEADD(day, 1, @CurrentDate) -- change the day
+            SET @CurrentDate = DATEADD(day, 1, @CurrentDate) -- change the day to the next one and start loop again
         END
 
         COMMIT TRANSACTION
@@ -70,5 +71,5 @@ BEGIN
 END
 GO
 
-EXEC dbo.RebuildDimDate @StartDate = '20260801', @EndDate = '20261031'
+EXEC dbo.RebuildDimDate @StartDate = @StartDate, @EndDate = @EndDate
 SELECT COUNT(*) AS date_count FROM dbo.DimDate
