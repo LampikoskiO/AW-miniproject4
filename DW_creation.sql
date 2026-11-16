@@ -61,7 +61,7 @@ create table FactRentalLine (
 	pickup_station_key	int	not null,
 	return_station_key	int	not null,
 	price		decimal(10,2)	not null,
-	-- VAT			decimal(10,2)	not null, -- add to database ?
+	VAT			decimal(10,2)	not null,
 	datetime_start	datetime	not null,
 	datetime_end	datetime	not null,
 	payment_method  nvarchar(50) not null,
