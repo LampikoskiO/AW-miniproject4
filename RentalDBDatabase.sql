@@ -1,14 +1,13 @@
 	
 
-CREATE  DATABASE RentalDB;
+drop database rentaldb;
+go
+Create Database RentalDB;
 go
 
-
-use RentalDB;
+USE database RentalDB;
 go
-
-
-
+	
 CREATE TABLE Category
 (
 	Category_id INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
@@ -99,6 +98,7 @@ CREATE TABLE RentalLine
 	rental_line_no int not null,
 	equipment_id INT NOT NULL,
 	Price Decimal(10,2) not null,
+	VAT decimal(19, 2) not null,
 	
 	Constraint pk_RentalLine
 	Primary KEY (rental_id, rental_line_no)

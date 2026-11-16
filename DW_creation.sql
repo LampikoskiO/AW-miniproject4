@@ -4,6 +4,13 @@ use RentalDB;
 
 go
 
+drop table FactRentalLine;
+drop table DimRentalStation;
+drop table DimModel;
+drop table DimDate;
+drop table DimEmployee;
+drop table DimCustomer;
+
 create table DimRentalStation (
 	rental_station_key	int identity	constraint PK_rental_station_key Primary key,
 	rental_station_id	int	not null,
@@ -25,6 +32,7 @@ create table DimModel (
 
 create table DimCustomer (
 	customer_key		int	identity	constraint PK_customer_key primary key,
+	customer_id			int			not null,
 	first_name		nvarchar(50)	not null,
 	last_name		nvarchar(50)	not null,
 	address			nvarchar(100)	not null,
