@@ -77,6 +77,6 @@ SELECT @StartDate = CAST(MIN(start_date) AS date),      -- read the lowest date 
        @EndDate   = CAST(MAX(end_date)   AS date)       -- read the highest date straight from the data
 FROM dbo.RENTAL
 
-EXEC dbo.RebuildDimDate @StartDate = @StartDate, @EndDate = @EndDate    -- build/execute the dimension
+EXEC dbo.RebuildDimDate @StartDate = @StartDate, @EndDate = @EndDate    -- execute the procedure to build dimension (DimDate)
 
 SELECT COUNT(*) AS date_count FROM dbo.DimDate
