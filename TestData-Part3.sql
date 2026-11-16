@@ -281,8 +281,20 @@ BEGIN TRY
         FROM dbo.EquipmentItem AS ei
         JOIN dbo.Model AS m ON m.model_id = ei.model_id
     )
-    INSERT INTO dbo.RentalLine (rental_id, rental_line_no, equipment_id, Price)
-    SELECT r.rental_id, ln.RentalLineNo, eq.equipment_id, ln.Price
+    INSERT INTO dbo.RentalLine (rental_id, rental_line_no, equipment_id, Price, VAT)
+    SELECT
+        r.rental_id,
+        ln.RentalLineNo,
+        eq.equipment_id,
+        ln.Price,
+        -- VAT component of the gross (VAT-inclusive) price, rounded to cents.
+        -- Change this expression if your VAT column represents a RATE instead.
+        CAST(CASE ps.country
+            WHEN N'Germany'     THEN ROUND(ln.Price * 19.0 / 119.0, 2)
+            WHEN N'Netherlands' THEN ROUND(ln.Price * 21.0 / 121.0, 2)
+            WHEN N'Finland'     THEN ROUND(ln.Price * 25.5 / 125.5, 2)
+            ELSE 0.00
+        END AS DECIMAL(19,2)) AS VAT
     FROM @RentalLineSeed AS ln
     JOIN @RentalSeed AS s ON s.RentalRef = ln.RentalRef
     JOIN dbo.RENTAL AS r ON r.start_date = s.StartDate
