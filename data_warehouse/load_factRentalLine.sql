@@ -93,7 +93,8 @@ BEGIN
         SET @loaded = @@ROWCOUNT   -- how many new fact rows were inserted (capture right after the INSERT)
 
 
-    -- VALIDATION: we are making sure that every rental line must have landed in the fact table
+-- VALIDATION: we are making sure that every rental line must have landed in the fact table
+
         IF EXISTS (
             SELECT 1 FROM RentalLine AS rl
             WHERE NOT EXISTS ( -- check if the rental line is in the fact table
@@ -103,6 +104,8 @@ BEGIN
         )
             THROW 53001, 'A rental line is missing from the fact (a dimension key failed to resolve).', 1
         COMMIT TRANSACTION -- if we pass validation we commit the transaction, yippee!! :)
+
+ -- LOGGING STUFF FOR THE LOG TABLE
 
         INSERT INTO EtlLog (target_table, started_at, ended_at, rows_loaded, status) -- LOGGING STUFF FOR THE LOG TABLE
         VALUES ('FactRentalLine', @started, SYSDATETIME(), @loaded, 'Success') -- (this table, when it started, when it ended, how many rows were loaded, and whether it succeeded or failed)
