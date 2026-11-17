@@ -1,4 +1,4 @@
--- BEST way to do this, according to labs 2.1C and lab 2.1B: reusable, validation and makes no gaps in the calendar.
+-- BEST way to do this, according to labs 2.1C and lab 2.1B, its reusable, has validation and makes no gaps in the calendar.
 USE RentalDB
 GO
 
