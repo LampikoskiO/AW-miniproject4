@@ -9,13 +9,13 @@ use RentalDB;
 go
 
 -- Remove the existing fact table and dimension tables before rebuilding the schema.
-drop table FactRentalLine;
-drop table DimRentalStation;
-drop table DimModel;
-drop table DimDate;
-drop table DimEmployee;
-drop table DimCustomer;
-drop table EtlLog;
+drop table if exists FactRentalLine;
+drop table if exists DimRentalStation;
+drop table if exists DimModel;
+drop table if exists DimDate;
+drop table if exists DimEmployee;
+drop table if exists DimCustomer;
+drop table if exists EtlLog;
 
 -- Creating the LOG table for all ETL operations
 CREATE TABLE dbo.EtlLog (

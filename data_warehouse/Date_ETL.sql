@@ -1,4 +1,4 @@
--- Better way to do this, according to labs 2.1C and lab 2.1B: reusable, validation and makes no gaps in the calendar.
+-- BEST way to do this, according to labs 2.1C and lab 2.1B: reusable, validation and makes no gaps in the calendar.
 USE RentalDB
 GO
 
@@ -56,6 +56,7 @@ SELECT @StartDate = CAST(MIN(start_date) AS date),      -- read the lowest date 
        @EndDate   = CAST(MAX(end_date)   AS date)       -- read the highest date straight from the data
 FROM dbo.RENTAL
 
+-- LOGGING STUFF FOR THE LOG TABLE AND EXECUTING THE PROCEDURE TO BUILD DIMDATE
 BEGIN TRY
     EXEC dbo.RebuildDimDate @StartDate = @StartDate, @EndDate = @EndDate                        -- execute the procedure to build dimension (DimDate)
 
