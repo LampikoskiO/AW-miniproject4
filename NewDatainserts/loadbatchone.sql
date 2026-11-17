@@ -1,5 +1,4 @@
-/*
-*/
+
 USE RentalDB;
 GO
 SET NOCOUNT ON;
@@ -20,7 +19,6 @@ BEGIN TRY
     BEGIN
         THROW 52000, 'First run the original TestData-Part3.sql on a fresh RentalDB.', 1;
     END;
-
 
     IF (SELECT COUNT(*) FROM dbo.Model) <> 7
        OR EXISTS (
@@ -50,8 +48,6 @@ BEGIN TRY
     WHEN NOT MATCHED BY TARGET THEN
         INSERT (first_name, last_name) VALUES (src.first_name, src.last_name);
 
-    -- Add just the seventh physical item per model, if absent. The 7th slot
-    -- belongs to Stockholm. This MERGE is safe to re-run for subsequent batches.
     ;WITH CurrentSlots AS (
         SELECT ei.model_id, ei.equipment_id,
                ROW_NUMBER() OVER (PARTITION BY ei.model_id ORDER BY ei.equipment_id) AS slot_no
@@ -79,8 +75,6 @@ BEGIN TRY
         THROW 52002, 'Stockholm inventory could not be prepared correctly.', 1;
     END;
 
-    -- Strings are used for the raw CSV dates and price so conversion errors
-    -- can be detected explicitly rather than silently changing values.
     CREATE TABLE #CsvRaw (
         rental_ref NVARCHAR(20) NULL,
         customer_email NVARCHAR(60) NULL,
@@ -140,8 +134,6 @@ BEGIN TRY
         THROW 52005, 'Duplicate rental_ref or start_date within this CSV.', 1;
     END;
 
-    -- Each email can appear in multiple rentals, but its customer details
-    -- must remain identical. DISTINCT then gives one MERGE source per email.
     IF EXISTS (
         SELECT customer_email
         FROM #CsvRaw
@@ -155,8 +147,6 @@ BEGIN TRY
         THROW 52006, 'Inconsistent customer details for the same email.', 1;
     END;
 
-    -- A matching email must represent the same person/city. Do not silently
-    -- attach new rentals to a different existing customer with that email.
     IF EXISTS (
         SELECT 1 FROM #CsvRaw AS src
         JOIN dbo.Customer AS existing ON existing.email = src.customer_email
@@ -273,8 +263,7 @@ BEGIN TRY
     BEGIN
         THROW 52008, 'Invalid dates, city, employee, station type or payment channel.', 1;
     END;
-    -- Crucial extra validation: a nonblank *unknown* employee must not be
-    -- silently treated as NULL by the LEFT JOIN for unattended stations.
+
     IF EXISTS (
         SELECT 1 FROM #CsvRaw AS raw
         JOIN #Prepared AS p ON p.rental_ref = raw.rental_ref
@@ -290,7 +279,6 @@ BEGIN TRY
         THROW 52010, 'Duplicate parsed start_date in CSV.', 1;
     END;
 
-    -- Fail on an existing time collision unless the old rental is IDENTICAL.
     IF EXISTS (
         SELECT 1 FROM #Prepared AS s
         JOIN dbo.RENTAL AS r ON r.start_date = s.start_date
@@ -305,7 +293,6 @@ BEGIN TRY
         THROW 52011, 'Existing RENTAL has the same start_date but different details: import stopped.', 1;
     END;
 
-    -- Validate no physical item double booking inside this batch.
     IF EXISTS (
         SELECT 1 FROM #Prepared AS a
         JOIN #Prepared AS b
@@ -317,8 +304,6 @@ BEGIN TRY
         THROW 52012, 'Two rows in the CSV overlap on the same physical equipment.', 1;
     END;
 
-    -- Also detect equipment collisions with the original seed or prior batches.
-    -- The equal start_date exception allows idempotent reruns of THIS rental.
     IF EXISTS (
         SELECT 1 FROM #Prepared AS s
         JOIN dbo.RentalLine AS l ON l.equipment_id = s.equipment_id
@@ -348,7 +333,6 @@ BEGIN TRY
     END;
 
     DECLARE @RentalActions TABLE (action_taken NVARCHAR(10));
-    -- MERGE is INSERT-ONLY: matching start_date means the rental already exists.
     MERGE dbo.RENTAL WITH (HOLDLOCK) AS dest
     USING #Prepared AS src
        ON dest.start_date = src.start_date
@@ -359,7 +343,6 @@ BEGIN TRY
                 src.employee_id, src.start_date, src.end_date, src.payment_method)
     OUTPUT $action INTO @RentalActions;
 
-    -- Compare existing rental lines BEFORE merging, and refuse silent edits.
     IF EXISTS (
         SELECT 1 FROM #Prepared AS s
         JOIN dbo.RENTAL AS r ON r.start_date = s.start_date
@@ -384,7 +367,6 @@ BEGIN TRY
         VALUES (src.rental_id, src.rental_line_no, src.equipment_id, src.price, src.VAT)
     OUTPUT $action INTO @LineActions;
 
-    -- This batch must now be represented by one RENTAL and one RentalLine.
     IF (SELECT COUNT(*) FROM #Prepared AS s
         JOIN dbo.RENTAL AS r ON r.start_date = s.start_date) <> (SELECT COUNT(*) FROM #Prepared)
        OR (SELECT COUNT(*) FROM #Prepared AS s
