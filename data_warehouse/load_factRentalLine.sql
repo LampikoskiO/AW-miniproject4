@@ -93,7 +93,7 @@ BEGIN
         SET @loaded = @@ROWCOUNT   -- how many new fact rows were inserted (capture right after the INSERT)
 
 
--- VALIDATION 1: we are making sure that every rental line must have landed in the fact table
+-- VALIDATION 1: we are making sure that every rental line must have landed in the fact table atleast once (it has a matchin pair)
 
         IF EXISTS (
             SELECT 1 FROM RentalLine AS rl

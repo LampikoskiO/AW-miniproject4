@@ -20,7 +20,7 @@ BEGIN
     BEGIN TRY
         BEGIN TRANSACTION       -- transaction makes it so its all or nothing, if something fails it will roll back the changes and not leave the table half filled
 
-        DELETE FROM dbo.DimDate
+        DELETE FROM dbo.DimDate -- delete all the rows in the dimdate table, we are going to rebuild it from scratch
 
         DECLARE @CurrentDate date = @StartDate
         WHILE @CurrentDate <= @EndDate                                              -- we loop through all the dates in the date range and fill them into the table
