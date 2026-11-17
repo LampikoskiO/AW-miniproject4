@@ -2,7 +2,7 @@
 use RentalDB;
 go
 
-create or alter procedure dbo.load_dimModel
+create or alter procedure dbo.usp_load_dimModel
 as
 begin
     set nocount on;
@@ -41,7 +41,7 @@ begin
             on m.sub_cat_id = sc.sub_cat_id
             inner join Category as c
             on c.category_id = sc.category_id
-            INTERSECT
+            except
             select model_id, brand_name, model_name, subcategory_name, category_name
             from DimModel
             )
@@ -57,3 +57,4 @@ begin
 end;
 go
 
+exec dbo.usp_load_dimModel;
