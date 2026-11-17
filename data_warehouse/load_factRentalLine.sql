@@ -134,3 +134,4 @@ EXEC dbo.usp_LoadFactRentalLine
 
 SELECT COUNT(*) FROM FactRentalLine
 SELECT COUNT(*) FROM RentalLine
+SELECT * FROM dbo.EtlLog -- checking that logging works
