@@ -93,7 +93,7 @@ BEGIN
         SET @loaded = @@ROWCOUNT   -- how many new fact rows were inserted (capture right after the INSERT)
 
 
--- VALIDATION: we are making sure that every rental line must have landed in the fact table
+-- VALIDATION 1: we are making sure that every rental line must have landed in the fact table
 
         IF EXISTS (
             SELECT 1 FROM RentalLine AS rl
@@ -103,7 +103,15 @@ BEGIN
             )
         )
             THROW 53001, 'A rental line is missing from the fact (a dimension key failed to resolve).', 1
-        COMMIT TRANSACTION -- if we pass validation we commit the transaction, yippee!! :)
+
+-- VALIDATION 2: we are making sure that the fact table has the same number of rows as the source rental line table
+
+        IF (SELECT COUNT(*) FROM FactRentalLine) <> (SELECT COUNT(*) FROM RentalLine)
+            THROW 53002, 'Fact row count does not match the source RentalLine count.', 1		
+		
+-- IF WE PASS BOTH VALIDATIONS, WE COMMIT THE TRANSACTION AND LOG THE SUCCESS
+
+		COMMIT TRANSACTION -- Successful, yippee!! we happy :)
 
  -- LOGGING STUFF FOR THE LOG TABLE
 
@@ -115,7 +123,7 @@ BEGIN
         IF XACT_STATE() <> 0 ROLLBACK TRANSACTION -- if the transaction is still open, roll it back
         INSERT INTO EtlLog (target_table, started_at, ended_at, status, error_number, error_message) -- LOGGING STUFF FOR THE LOG TABLE
         VALUES ('FactRentalLine', @started, SYSDATETIME(), 'Failed', ERROR_NUMBER(), ERROR_MESSAGE()) -- (this table, when it started, when it ended, whether it succeeded or failed, the error number and the error message)
-        THROW -- THROW the error message, angrily.. failure is not acceptable.. >:(
+        THROW -- THROW the error message, angrily.. failure is not acceptable! >:(
     END CATCH
 
 END
