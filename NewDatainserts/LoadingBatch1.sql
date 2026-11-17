@@ -5,7 +5,11 @@ GO
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
 
-DECLARE @CsvFile NVARCHAR(4000) = N'C:\RentalImport\rentals_batch_01.csv';
+-- Path comes from env.local.sql (your own copy, gitignored).
+-- Run this script in SQLCMD Mode (Query menu -> SQLCMD Mode).
+:r env.local.sql
+
+DECLARE @CsvFile NVARCHAR(4000) = N'$(CsvFile)';
 
 BEGIN TRY
     BEGIN TRANSACTION;

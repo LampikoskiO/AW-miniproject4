@@ -16,3 +16,42 @@ Run the following scripts in order in SQL Server:
 9. `data_warehouse/load_factRentalLine.sql` — load the rental fact table.
 
 The model dimension script is named `load_dimModel.sql` in the repository.
+
+## Importing extra rentals (NewDatainserts)
+
+The `NewDatainserts/` folder holds additional rental batches as CSV files and
+`LoadingBatch1.sql`, which imports one batch into the **operational** database
+(Customer, RENTAL, RentalLine, etc.). Run it after step 2, then re-run the data
+warehouse loads (steps 4–9) so the new rentals flow through to the warehouse.
+
+### One-time setup (each group member)
+
+The CSV path is different on every machine, so it is kept out of git. Set yours once:
+
+1. In the `NewDatainserts` folder, copy the template to your own local file:
+   ```
+   cp env.example.sql env.local.sql
+   ```
+2. Open `env.local.sql` and set the path to your CSV folder:
+   ```
+   :setvar CsvFile "C:\your\path\to\NewDatainserts\rentals_batch_01.csv"
+   ```
+3. `env.local.sql` is listed in `.gitignore`, so it stays on your machine only.
+   **Never commit it.** Only `env.example.sql` is shared.
+
+### Running the import
+
+1. Open `NewDatainserts/LoadingBatch1.sql` in SSMS.
+2. Turn on SQLCMD Mode: **Query menu → SQLCMD Mode**. This is required, otherwise
+   `:r env.local.sql` and `$(CsvFile)` are reported as errors.
+3. Execute. To load another batch, change the filename in your `env.local.sql`
+   (e.g. `rentals_batch_02.csv`) and run again.
+
+### CSV line endings
+
+The batch CSV files use Windows line endings (CRLF). The `BULK INSERT` in
+`LoadingBatch1.sql` must use `ROWTERMINATOR = '0x0d0a'` to match, otherwise the
+trailing carriage return breaks the last column and the import fails with
+"invalid, blank, or unconvertible field". If git rewrites line endings differently
+on different machines, add a `.gitattributes` with `*.csv binary` so the files stay
+byte-for-byte identical for everyone.
