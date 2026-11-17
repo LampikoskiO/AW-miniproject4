@@ -15,6 +15,26 @@ drop table DimModel;
 drop table DimDate;
 drop table DimEmployee;
 drop table DimCustomer;
+drop table EtlLog;
+
+-- Creating the LOG table for all ETL operations
+CREATE TABLE dbo.EtlLog (
+    log_id          int identity    constraint PK_EtlLog primary key,
+    target_table    nvarchar(100)   not null,   -- which table was loaded
+    started_at      datetime2       not null,   -- when the step started
+    ended_at        datetime2       null,       -- when it finished
+    rows_read       int             null,       -- rows pulled from source
+    rows_loaded     int             null,       -- rows inserted into target
+    rows_rejected   int             null,       -- rows skipped / failed validation
+    status          nvarchar(20)    not null,   -- 'Success' or 'Failed'
+    error_number    int             null,       -- ERROR_NUMBER() on failure
+    error_message   nvarchar(2000)  null,       -- ERROR_MESSAGE() on failure
+    run_by          nvarchar(128)   not null
+        constraint DF_EtlLog_run_by default SUSER_SNAME(),  -- who ran it
+    run_at          datetime2       not null
+        constraint DF_EtlLog_run_at default SYSDATETIME()   -- when the row was logged
+);
+
 
 -- Rental station dimension: stores static information about each rental station.
 create table DimRentalStation (
