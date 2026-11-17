@@ -5,8 +5,8 @@ SET NOCOUNT ON;
 SET XACT_ABORT ON;
 
 -- Path comes from env.local.sql (your own copy, gitignored).
--- Run this script in SQLCMD Mode (Query menu -> SQLCMD Mode).
-:r env.local.sql
+-- Run this script in SQLCMD Mode (VSCODE: Command Palette (Ctrl+Shift+P) → type “SQLCMD” → pick MS SQL: Toggle SQLCMD Mode.).
+:r NewDatainserts\env.local.sql
 
 DECLARE @CsvFile NVARCHAR(4000) = N'$(CsvFile)';
 
