@@ -15,43 +15,14 @@ Run the following scripts in order in SQL Server:
 8. `data_warehouse/load_dimModel.sql` — load the model dimension.
 9. `data_warehouse/load_factRentalLine.sql` — load the rental fact table.
 
-The model dimension script is named `load_dimModel.sql` in the repository.
-
 ## Importing extra rentals (NewDatainserts)
 
-The `NewDatainserts/` folder holds additional rental batches as CSV files and
-`LoadingBatch1.sql`, which imports one batch into the **operational** database
-(Customer, RENTAL, RentalLine, etc.). Run it after step 2, then re-run the data
-warehouse loads (steps 4–9) so the new rentals flow through to the warehouse.
+`NewDatainserts/LoadingBatch1.sql` imports a CSV batch of rentals into the
+operational database. Run it after step 2, then re-run steps 4–9.
 
-### One-time setup (each group member)
+**Setup (once per person):** copy `env.example.sql` to `env.local.sql` and set your
+own CSV path inside it. `env.local.sql` is gitignored, so keep your own and do not
+commit it.
 
-The CSV path is different on every machine, so it is kept out of git. Set yours once:
-
-1. In the `NewDatainserts` folder, copy the template to your own local file:
-   ```
-   cp env.example.sql env.local.sql
-   ```
-2. Open `env.local.sql` and set the path to your CSV folder:
-   ```
-   :setvar CsvFile "C:\your\path\to\NewDatainserts\rentals_batch_01.csv"
-   ```
-3. `env.local.sql` is listed in `.gitignore`, so it stays on your machine only.
-   **Never commit it.** Only `env.example.sql` is shared.
-
-### Running the import
-
-1. Open `NewDatainserts/LoadingBatch1.sql` in SSMS.
-2. Turn on SQLCMD Mode: **Query menu → SQLCMD Mode**. This is required, otherwise
-   `:r env.local.sql` and `$(CsvFile)` are reported as errors.
-3. Execute. To load another batch, change the filename in your `env.local.sql`
-   (e.g. `rentals_batch_02.csv`) and run again.
-
-### CSV line endings
-
-The batch CSV files use Windows line endings (CRLF). The `BULK INSERT` in
-`LoadingBatch1.sql` must use `ROWTERMINATOR = '0x0d0a'` to match, otherwise the
-trailing carriage return breaks the last column and the import fails with
-"invalid, blank, or unconvertible field". If git rewrites line endings differently
-on different machines, add a `.gitattributes` with `*.csv binary` so the files stay
-byte-for-byte identical for everyone.
+**Run it** with SQLCMD Mode on (Query menu → SQLCMD Mode), otherwise `:r` and
+`$(CsvFile)` fail. Change the filename in `env.local.sql` to load a different batch.

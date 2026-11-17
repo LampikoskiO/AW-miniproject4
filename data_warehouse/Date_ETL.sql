@@ -68,9 +68,10 @@ END TRY
 BEGIN CATCH
 
     INSERT INTO dbo.EtlLog (target_table, started_at, ended_at, status, error_number, error_message)        -- if it fails, we catch the error and we insert the data into the log table with the error number and error message
-    VALUES ('DimDate', @started, SYSDATETIME(), 'Failed', ERROR_NUMBER(), ERROR_MESSAGE())                  -- we insert the failed status 
-
+    VALUES ('DimDate', @started, SYSDATETIME(), 'Failed', ERROR_NUMBER(), ERROR_MESSAGE());                  -- we insert the failed status 
+    
     THROW
+
 END CATCH
 
 SELECT COUNT(*) AS date_count FROM dbo.DimDate                  -- select all the rows in the DimDate table to see how many rows were inserted

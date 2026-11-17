@@ -1,7 +1,7 @@
 
 
 
-USE RentalDW;
+USE RentalDB;
 GO
 --Creating the stored procedure
 CREATE OR ALTER PROCEDURE dbo.LoadDimCustomer

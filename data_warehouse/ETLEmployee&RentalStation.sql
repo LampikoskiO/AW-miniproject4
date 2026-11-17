@@ -1,5 +1,5 @@
 use RentalDB;
-
+GO
 /*-- Load DimRentalStation from the source RentalStation table
 INSERT into DimRentalStation (
     rental_station_id,          -- business key from the source

@@ -116,14 +116,21 @@ BEGIN
  -- LOGGING STUFF FOR THE LOG TABLE
 
         INSERT INTO EtlLog (target_table, started_at, ended_at, rows_loaded, status) -- LOGGING STUFF FOR THE LOG TABLE
-        VALUES ('FactRentalLine', @started, SYSDATETIME(), @loaded, 'Success') -- (this table, when it started, when it ended, how many rows were loaded, and whether it succeeded or failed)
+        VALUES ('FactRentalLine', @started, SYSDATETIME(), @loaded, 'Success'); -- (this table, when it started, when it ended, how many rows were loaded, and whether it succeeded or failed)
     END TRY
 
     BEGIN CATCH -- if try block fails we begin the catch block
         IF XACT_STATE() <> 0 ROLLBACK TRANSACTION -- if the transaction is still open, roll it back
-        INSERT INTO EtlLog (target_table, started_at, ended_at, status, error_number, error_message) -- LOGGING STUFF FOR THE LOG TABLE
-        VALUES ('FactRentalLine', @started, SYSDATETIME(), 'Failed', ERROR_NUMBER(), ERROR_MESSAGE()) -- (this table, when it started, when it ended, whether it succeeded or failed, the error number and the error message)
+        
+		INSERT INTO EtlLog (target_table, started_at, ended_at, status, error_number, error_message) -- LOGGING STUFF FOR THE LOG TABLE
+        VALUES ('FactRentalLine', @started, SYSDATETIME(), 'Failed', ERROR_NUMBER(), ERROR_MESSAGE()); -- (this table, when it started, when it ended, whether it succeeded or failed, the error number and the error message)
         THROW -- THROW the error message, angrily.. failure is not acceptable! >:(
     END CATCH
 
 END
+GO
+
+EXEC dbo.usp_LoadFactRentalLine
+
+SELECT COUNT(*) FROM FactRentalLine
+SELECT COUNT(*) FROM RentalLine
