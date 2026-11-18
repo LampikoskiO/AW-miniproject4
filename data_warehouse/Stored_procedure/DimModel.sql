@@ -93,12 +93,12 @@ BEGIN
         SET @EndTime = SYSDATETIME();
 
         INSERT INTO dbo.ETLLog (
-            procedure_name,
-            start_time,
-            end_time,
-            rows_affected,
+           target_table,
+          started_at,
+          ended_at,
+           rows_loaded,
             status,
-            error_message
+          error_message
         )
         VALUES (
             'usp_load_dimModel',
@@ -120,10 +120,10 @@ BEGIN
 
         -- Log failed ETL execution.
         INSERT INTO dbo.ETLLog (
-            procedure_name,
-            start_time,
-            end_time,
-            rows_affected,
+            target_table,
+            started_at,
+            ended_at,
+            rows_loaded,
             status,
             error_message
         )
