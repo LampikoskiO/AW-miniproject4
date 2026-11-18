@@ -16,6 +16,7 @@ BEGIN TRY
        OR EXISTS (SELECT 1 FROM dbo.SubCategory)
        OR EXISTS (SELECT 1 FROM dbo.Model)
        OR EXISTS (SELECT 1 FROM dbo.EquipmentItem)
+       OR EXISTS (SELECT 1 FROM dbo.Maintenance)
        OR EXISTS (SELECT 1 FROM dbo.RentalStation)
        OR EXISTS (SELECT 1 FROM dbo.Customer)
        OR EXISTS (SELECT 1 FROM dbo.Employee)
@@ -63,13 +64,52 @@ BEGIN TRY
     -- Six physical units of each model: 7 models x 6 cities = 42 items.
     -- The lowest equipment_id for a model is city slot 1, and so on.
     -- CROSS JOIN pairs every model with all 6 condition rows, giving 6 copies each.
-    INSERT INTO dbo.EquipmentItem (model_id, [Condition])
-    SELECT m.model_id, d.ItemCondition
+    INSERT INTO dbo.EquipmentItem (model_id, [Condition], aquired_date, is_lost)
+    SELECT m.model_id, d.ItemCondition, CONVERT(date, '2025-01-01'), 0x00
     FROM dbo.Model AS m
     CROSS JOIN (VALUES
         (1, N'Excellent'), (2, N'Good'), (3, N'Good'),
         (4, N'Excellent'), (5, N'Fair'), (6, N'Good')
     ) AS d(CitySlot, ItemCondition);
+
+    -- One maintenance record for a seeded item, after the seeded rental period.
+    INSERT INTO dbo.Maintenance (equipment_id, start_time, end_time, cost)
+    SELECT TOP (1)
+        ei.equipment_id,
+        '2026-11-01T08:00:00',
+        '2026-11-03T17:00:00',
+        45.00
+    FROM dbo.EquipmentItem AS ei
+    JOIN dbo.Model AS m ON m.model_id = ei.model_id
+    WHERE m.name = N'CityRide 3'
+    ORDER BY ei.equipment_id;
+
+    IF @@ROWCOUNT <> 1
+        THROW 51006, 'Maintenance seed row could not be inserted.', 1;
+
+    -- Add 20 more maintenance records for different items.
+    ;WITH EquipmentForMaintenance AS (
+        SELECT
+            ei.equipment_id,
+            ROW_NUMBER() OVER (ORDER BY ei.equipment_id) AS maintenance_number
+        FROM dbo.EquipmentItem AS ei
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM dbo.Maintenance AS m
+            WHERE m.equipment_id = ei.equipment_id
+        )
+    )
+    INSERT INTO dbo.Maintenance (equipment_id, start_time, end_time, cost)
+    SELECT
+        equipment_id,
+        DATEADD(day, 2 * maintenance_number + 3, CONVERT(datetime, '2026-11-01T08:00:00')),
+        DATEADD(hour, 33, DATEADD(day, 2 * maintenance_number + 3, CONVERT(datetime, '2026-11-01T08:00:00'))),
+        CONVERT(decimal(10,2), 20.00 + maintenance_number)
+    FROM EquipmentForMaintenance
+    WHERE maintenance_number <= 20;
+
+    IF @@ROWCOUNT <> 20
+        THROW 51007, 'Expected 20 additional maintenance rows.', 1;
 
     -- 2. Rental stores and unattended stations in six cities.
     INSERT INTO dbo.RentalStation (station_name, address, city, country, station_type)
