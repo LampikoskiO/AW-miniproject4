@@ -15,7 +15,7 @@ BEGIN
         From dbo.EquipmentItem
 
 Update d
-Set d.acquired_date = e.acquired_date,
+Set d.acquired_date = e.aquired_date,
 d.removed_date = e.removed_date,
 d.[condition] = e.[condition],
 d.is_lost = e.is_lost
@@ -34,14 +34,14 @@ End as removed_date
 Where exists (
 Select d.acquired_date, d.removed_date, d.[condition], d.is_lost
 Except
-Select e.acquired_date, x.removed_date, e.[condition], e.is_lost
+Select e.aquired_date, x.removed_date, e.[condition], e.is_lost
 );
 
 Set @loaded = @loaded + @@ROWCOUNT;
 
 Insert into dbo.DimEquipment(
 equipment_id, acquired_date, removed_date, [condition], is_lost)
-Select e.equipment_id, e.acquired_date,
+Select e.equipment_id, e.aquired_date,
 CASE 
 When e.removed_date is null
 or e.removed_date = '99991231'
