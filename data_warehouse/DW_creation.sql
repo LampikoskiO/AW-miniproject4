@@ -109,6 +109,18 @@ create table FactRentalLine (
 	constraint  PK_rentaline_id primary key (rental_id, rental_line_no)
 );
 
+create table FactMaintenance (
+	maintenance_key			int	identity	NOT NULL constraint PK_maintenance_key primary key,
+	model_key				int				not null,
+	equipment_key			int				not null,
+	start_date_key			int				not null,
+	end_date_key			int				not null,
+	maintenance_id			int				not null,
+	maintenance_cost		decimal(10,2)	not null,
+	maintenance_time_min	int				not null,
+	maintenance_time_day	int				not null,
+);
+
 -- Add the foreign key constraints that connect each fact record to its dimension tables.
 -- These relationships enable analytical queries across customer, time, station, and model data.
 alter table FactRentalLine
