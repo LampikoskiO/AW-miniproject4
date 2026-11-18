@@ -92,7 +92,7 @@ BEGIN
         -- Log successful ETL execution.
         SET @EndTime = SYSDATETIME();
 
-        INSERT INTO dbo.ETL_Log (
+        INSERT INTO dbo.ETLLog (
             procedure_name,
             start_time,
             end_time,
@@ -119,7 +119,7 @@ BEGIN
         SET @ErrorMessage = ERROR_MESSAGE();
 
         -- Log failed ETL execution.
-        INSERT INTO dbo.ETL_Log (
+        INSERT INTO dbo.ETLLog (
             procedure_name,
             start_time,
             end_time,
