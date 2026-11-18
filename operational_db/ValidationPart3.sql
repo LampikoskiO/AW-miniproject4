@@ -11,6 +11,7 @@ SELECT N'Category' AS TableName, COUNT(*) AS ActualRows, 3 AS ExpectedRows FROM 
 UNION ALL SELECT N'SubCategory', COUNT(*), 5 FROM dbo.SubCategory
 UNION ALL SELECT N'Model', COUNT(*), 7 FROM dbo.Model
 UNION ALL SELECT N'EquipmentItem', COUNT(*), 42 FROM dbo.EquipmentItem
+UNION ALL SELECT N'Maintenance', COUNT(*), 21 FROM dbo.Maintenance
 UNION ALL SELECT N'RentalStation', COUNT(*), 12 FROM dbo.RentalStation
 UNION ALL SELECT N'Customer', COUNT(*), 18 FROM dbo.Customer
 UNION ALL SELECT N'Employee', COUNT(*), 6 FROM dbo.Employee
@@ -106,3 +107,35 @@ JOIN dbo.RentalLine AS b
   ON b.equipment_id = a.equipment_id AND a.rental_id < b.rental_id
 JOIN dbo.RENTAL AS rb ON rb.rental_id = b.rental_id
 WHERE ra.start_date < rb.end_date AND rb.start_date < ra.end_date;  -- the overlap test
+
+-- J. Equipment lifecycle dates must be valid. Should return ZERO rows.
+SELECT equipment_id, aquired_date, removed_date, is_lost
+FROM dbo.EquipmentItem
+WHERE removed_date < aquired_date
+   OR is_lost NOT IN (0x00, 0x01);
+
+-- K. Maintenance periods must have a positive duration and nonnegative cost.
+-- Should return ZERO rows.
+SELECT maintenance_id, equipment_id, start_time, end_time, cost
+FROM dbo.Maintenance
+WHERE end_time <= start_time
+   OR cost < 0;
+
+-- L. Rentals may only use equipment that was acquired, not yet removed, and
+-- not marked lost. Equipment must also be out of maintenance for the full
+-- rental interval. Should return ZERO rows.
+SELECT r.rental_id, rl.rental_line_no, ei.equipment_id,
+       r.start_date, r.end_date
+FROM dbo.RENTAL AS r
+JOIN dbo.RentalLine AS rl ON rl.rental_id = r.rental_id
+JOIN dbo.EquipmentItem AS ei ON ei.equipment_id = rl.equipment_id
+WHERE ei.aquired_date > CONVERT(date, r.start_date)
+   OR ei.removed_date < CONVERT(date, r.end_date)
+   OR ei.is_lost <> 0x00
+   OR EXISTS (
+       SELECT 1
+       FROM dbo.Maintenance AS m
+       WHERE m.equipment_id = ei.equipment_id
+         AND m.start_time < r.end_date
+         AND r.start_date < m.end_time
+   );
