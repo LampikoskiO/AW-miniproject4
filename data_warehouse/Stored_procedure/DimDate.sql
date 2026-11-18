@@ -10,6 +10,9 @@ BEGIN
     SET NOCOUNT ON
     SET XACT_ABORT ON
 
+    DECLARE @started datetime2 = SYSDATETIME() -- for ETL logging
+    DECLARE @loaded int                        -- for ETL logging
+
     IF @StartDate IS NULL OR @EndDate IS NULL
         THROW 51101, 'Start_date & End_date are both required.', 1 -- we validate the input parameters, if they are null we throw an error
     IF @EndDate < @StartDate
@@ -25,7 +28,7 @@ BEGIN
         DECLARE @CurrentDate date = @StartDate
         WHILE @CurrentDate <= @EndDate                                              -- we loop through all the dates in the date range and fill them into the table
         BEGIN                                                                                       -- this also doesnt leave any gaps in the calendar
-            INSERT INTO dbo.DimDate (date_key, [date], [day], [month], month_name, [year]) 
+            INSERT INTO dbo.DimDate (date_key, [date], [day], [month], month_name, [year])
             VALUES (
                 CONVERT(int, CONVERT(char(8), @CurrentDate, 112)),   -- 8 digit number YYYYMMDD key
                 @CurrentDate,
@@ -38,11 +41,20 @@ BEGIN
             SET @CurrentDate = DATEADD(day, 1, @CurrentDate) -- change the day to the next one and start loop again
         END
 
+        SET @loaded = (SELECT COUNT(*) FROM dbo.DimDate)                                            -- how many rows ended up in the dimension
+
         COMMIT TRANSACTION
+--LOGGING STUFF INTO THE LOG TABLE
+        INSERT INTO dbo.EtlLog (target_table, started_at, ended_at, rows_loaded, status)            -- Inserting data into the LOG table
+        VALUES ('DimDate', @started, SYSDATETIME(), @loaded, 'Success')                             -- inserting date, when it started, when it ended, how many rows were loaded, and the status of the operation which is success
     END TRY
     BEGIN CATCH
         IF XACT_STATE() <> 0
             ROLLBACK TRANSACTION
+
+        INSERT INTO dbo.EtlLog (target_table, started_at, ended_at, status, error_number, error_message)        -- if it fails, we catch the error and we insert the data into the log table with the error number and error message
+        VALUES ('DimDate', @started, SYSDATETIME(), 'Failed', ERROR_NUMBER(), ERROR_MESSAGE());                  -- we insert the failed status
+
         THROW
     END CATCH
 END
