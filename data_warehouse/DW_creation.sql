@@ -143,3 +143,10 @@ add constraint	FK_customer_key foreign key (customer_key) references DimCustomer
 	constraint	FK_end_date_key foreign key (end_date_key) references DimDate(date_key),
 	constraint	FK_pickup_station_key foreign key (pickup_station_key) references DimRentalStation(rental_station_key),
 	constraint	FK_return_station_key foreign key (return_station_key) references DimRentalStation(rental_station_key);
+
+-- Add the foreign key constraints to FactMaintenance
+Alter Table FactMaintenance
+Add constraint FK_model_key foreign key (model_key) references DimModel(model_key),
+	constraint FK_equipment_key foreign key (equipment_key) references DimEquipment(equipment_key),
+	constraint FK_start_date_key foreign key (start_date_key) references DimDate(date_key),
+	constraint FK_end_date_key foreign key (end_date_key) references DimDate(date_key);
