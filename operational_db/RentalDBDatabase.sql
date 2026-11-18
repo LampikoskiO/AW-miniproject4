@@ -3,7 +3,8 @@
 use master;
 go
 
-drop database rentaldb; -- drop it so we are always running this on a clean slate, no duplicates etc.. resets the database
+if db_id(N'RentalDB') is not null
+    drop database RentalDB; -- Rebuild from a clean slate when the database already exists.
 go
 Create Database RentalDB;
 go
@@ -24,8 +25,6 @@ CREATE TABLE SubCategory
 	sub_cat_id int NOT NULL IDENTITY(1,1) PRIMARY KEY,
 	Category_id INT NOT NULL,
 	name Nvarchar(50) NOT NULL,
-
-
 );
 
 CREATE TABLE Model
@@ -34,8 +33,6 @@ CREATE TABLE Model
 	sub_cat_id INT NOT NULL,
 	name nvarchar(50) NOT NULL,
 	brand_name nvarchar(50) NOT NULL,
-
-
 );
 go
 
@@ -44,10 +41,19 @@ CREATE TABLE EquipmentItem
 	equipment_id INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
 	model_id INT NOT NULL,
 	Condition nvarchar(10) NOT NULL,
-
-
+	aquired_date	date	NOT NULL,
+	removed_date	date	NOT NULL default('9999-12-31'),
+	is_lost		binary		NOT NULL,
 );
 go
+
+CREATE TABLE Maintenance(
+	maintenance_id	int		identity Primary key,
+	equipment_id	int,
+	start_time	datetime	NOT NULL,
+	end_time	datetime	NOT NULL default('9999-12-31'),
+	cost	decimal(10,2)	NOT NULL,
+)
 
 CREATE TABLE RentalStation
 (
@@ -76,7 +82,6 @@ CREATE TABLE Employee(
 	employee_id INT NOT NULL IDENtity(1,1) PRIMARY KEY,
 	first_name nvarchar(50) not null,
 	last_name nvarchar(50) not null
-
 );
 go
 
@@ -91,7 +96,6 @@ CREATE TABLE RENTAL
 	start_date DATETIME not null,
 	end_date DATETIME not null,
 	payment_method nvarchar(30) NOT NULL
-
 );
 go
 
@@ -105,15 +109,12 @@ CREATE TABLE RentalLine
 	
 	Constraint pk_RentalLine
 	Primary KEY (rental_id, rental_line_no)
-
-
 );
 
 
 -- Connecting the tables to eachother with foreign keys.
--- First the item/equipment hierarchy (Category → SubCategory → Model → EquipmentItem)
--- each category has subcategories which have models and each model has a physical item
 
+-- each category has subcategories which have models and each model has a physical item
 ---Subcategory -> Category
 Alter Table SubCategory
 ADD CONSTRAINT FK_SubCategory_category
@@ -133,8 +134,11 @@ ADD CONSTRAINT FK_EquipmentItem_Model
 FOREIGN KEY (model_id)
 REFERENCES Model(model_id)
 
+ALTER Table Maintenance
+ADD CONSTRAINT FK_equipment_id
+foreign key (equipment_id)
+references EquipmentItem(equipment_id)
 
--- all the rest of the tables and their connections to each other
 
 ---- Rental -> Customer
 -- every rental belongs to a customer
