@@ -10,11 +10,13 @@ go
 
 -- Remove the existing fact table and dimension tables before rebuilding the schema.
 drop table if exists FactRentalLine;
+drop table if exists FactMaintenance;
 drop table if exists DimRentalStation;
 drop table if exists DimModel;
 drop table if exists DimDate;
 drop table if exists DimEmployee;
 drop table if exists DimCustomer;
+drop table if exists DimEquipment;
 drop table if exists EtlLog;
 
 -- Creating the LOG table for all ETL operations
@@ -86,6 +88,16 @@ create table DimDate (
 	month			int				NOT NULL,
 	month_name		nvarchar(50)	NOT NULL,
 	year			int				NOT NULL
+);
+
+-- Equipment dimension
+Create Table DimEquipment(
+	equipment_key	int	identity	NOT NULL constraint PK_equipment_key primary key,
+	equipment_id	int				NOT NULL,
+	acquired_date	date			NOT NULL,
+	removed_date	date			NOT NULL,
+	condition		nvarchar(50)	NOT NULL,
+	is_lost			bit				NOT NULL
 );
 
 -- Fact table: stores each rental line as a transactional fact record.
