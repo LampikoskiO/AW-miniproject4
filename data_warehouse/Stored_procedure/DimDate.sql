@@ -9,6 +9,9 @@ BEGIN
     SET NOCOUNT ON
     SET XACT_ABORT ON
 
+    DECLARE @started datetime2 = SYSDATETIME()  -- for ETL logging
+    DECLARE @loaded int = 0                     -- for ETL logging
+
     -- Validate input parameters
     IF @StartDate IS NULL OR @EndDate IS NULL
         THROW 51101, 'Start_date & End_date are both required.', 1
@@ -49,32 +52,23 @@ BEGIN
             SET @CurrentDate = DATEADD(day, 1, @CurrentDate)
         END
 
+        SET @loaded = (SELECT COUNT(*) FROM dbo.DimDate)   -- how many rows ended up in the dimension
+
         COMMIT TRANSACTION
+
+        -- Log successful execution
+        INSERT INTO dbo.EtlLog (target_table, started_at, ended_at, rows_loaded, status)
+        VALUES ('DimDate', @started, SYSDATETIME(), @loaded, 'Success')
     END TRY
     BEGIN CATCH
         IF XACT_STATE() <> 0
             ROLLBACK TRANSACTION
 
+        -- Log failed execution
+        INSERT INTO dbo.EtlLog (target_table, started_at, ended_at, status, error_number, error_message)
+        VALUES ('DimDate', @started, SYSDATETIME(), 'Failed', ERROR_NUMBER(), ERROR_MESSAGE());
+
         THROW
     END CATCH
 END
 GO
-DECLARE @StartDate date, @EndDate date;
-
-SELECT
-    @StartDate = MIN(DateValue),
-    @EndDate = MAX(DateValue)
-FROM (
-    SELECT CAST(start_date AS date) AS DateValue FROM dbo.Rental
-    UNION ALL
-    SELECT CAST(end_date AS date) FROM dbo.Rental
-    UNION ALL
-    SELECT CAST(start_time AS date) FROM dbo.Maintenance
-    WHERE start_time IS NOT NULL
-    UNION ALL
-    SELECT CAST(end_time AS date) FROM dbo.Maintenance
-    WHERE end_time IS NOT NULL
-) AS AllDates;
-
-
-

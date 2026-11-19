@@ -4,7 +4,10 @@ use master;
 go
 
 if db_id(N'RentalDB') is not null
+begin
+    alter database RentalDB set single_user with rollback immediate; -- force-close any open connections so the drop cannot be blocked
     drop database RentalDB; -- Rebuild from a clean slate when the database already exists.
+end
 go
 Create Database RentalDB;
 go
