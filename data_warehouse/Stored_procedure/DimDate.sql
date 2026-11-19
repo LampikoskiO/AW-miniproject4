@@ -76,13 +76,5 @@ FROM (
     WHERE end_time IS NOT NULL
 ) AS AllDates;
 
-EXEC dbo.RebuildDimDate
-    @StartDate = @StartDate,
-    @EndDate = @EndDate;
-
-SELECT *
-FROM dbo.DimDate
-WHERE [date] BETWEEN '2026-11-01' AND '2026-11-30'
-ORDER BY [date];
 
 
