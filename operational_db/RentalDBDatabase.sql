@@ -46,7 +46,7 @@ CREATE TABLE EquipmentItem
 	Condition nvarchar(10) NOT NULL,
 	aquired_date	date	NOT NULL,
 	removed_date	date	NOT NULL default('9999-12-31'),
-	is_lost		binary		NOT NULL,
+	is_lost		bit		NOT NULL,
 );
 go
 
