@@ -51,7 +51,7 @@ end,
 e.[condition], e.is_lost
 From dbo.EquipmentItem as e
 Where not exists(
-select 1 from dbo.dimeqipment as d where d.equipment_id = e.equipment_id
+select 1 from dbo.dimequipment as d where d.equipment_id = e.equipment_id
 );
 
 Set @loaded = @loaded + @@ROWCOUNT;
