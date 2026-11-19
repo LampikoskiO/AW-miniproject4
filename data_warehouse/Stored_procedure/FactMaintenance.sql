@@ -1,7 +1,7 @@
 ALTER TABLE dbo.FactMaintenance
 ALTER COLUMN end_date_key INT NULL;
 -- the dimdate updated version needs to be run as well if you get an error with the procedure
-
+go
 CREATE OR ALTER PROCEDURE dbo.usp_LoadFactMaintenance
 AS
 BEGIN
