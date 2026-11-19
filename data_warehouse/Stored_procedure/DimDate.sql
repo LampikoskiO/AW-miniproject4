@@ -1,41 +1,52 @@
--- BEST way to do this, according to labs 2.1C and lab 2.1B, its reusable, has validation and makes no gaps in the calendar.
 USE RentalDB
 GO
 
-CREATE OR ALTER PROCEDURE dbo.RebuildDimDate        -- procedure to build/rebuild the dimdate tables in data warehouse
-    @StartDate date,                            -- declaring startdate and enddate as input parameters for the procedure
+CREATE OR ALTER PROCEDURE dbo.RebuildDimDate
+    @StartDate date,
     @EndDate   date
 AS
 BEGIN
     SET NOCOUNT ON
     SET XACT_ABORT ON
 
+    -- Validate input parameters
     IF @StartDate IS NULL OR @EndDate IS NULL
-        THROW 51101, 'Start_date & End_date are both required.', 1 -- we validate the input parameters, if they are null we throw an error
+        THROW 51101, 'Start_date & End_date are both required.', 1
+
     IF @EndDate < @StartDate
         THROW 51102, 'End_date must not be before Start_date.', 1
 
     SET LANGUAGE us_english
 
     BEGIN TRY
-        BEGIN TRANSACTION       -- transaction makes it so its all or nothing, if something fails it will roll back the changes and not leave the table half filled
-
-        DELETE FROM dbo.DimDate -- delete all the rows in the dimdate table, we are going to rebuild it from scratch
+        BEGIN TRANSACTION
 
         DECLARE @CurrentDate date = @StartDate
-        WHILE @CurrentDate <= @EndDate                                              -- we loop through all the dates in the date range and fill them into the table
-        BEGIN                                                                                       -- this also doesnt leave any gaps in the calendar
-            INSERT INTO dbo.DimDate (date_key, [date], [day], [month], month_name, [year]) 
-            VALUES (
-                CONVERT(int, CONVERT(char(8), @CurrentDate, 112)),   -- 8 digit number YYYYMMDD key
-                @CurrentDate,
-                DAY(@CurrentDate),
-                MONTH(@CurrentDate),
-                DATENAME(month, @CurrentDate),
-                YEAR(@CurrentDate)
-            )
 
-            SET @CurrentDate = DATEADD(day, 1, @CurrentDate) -- change the day to the next one and start loop again
+        -- Loop through the complete date range
+        WHILE @CurrentDate <= @EndDate
+        BEGIN
+            -- Insert only dates that do not already exist
+            IF NOT EXISTS (
+                SELECT 1
+                FROM dbo.DimDate
+                WHERE date_key = CONVERT(int, CONVERT(char(8), @CurrentDate, 112))
+            )
+            BEGIN
+                INSERT INTO dbo.DimDate
+                    (date_key, [date], [day], [month], month_name, [year])
+                VALUES (
+                    CONVERT(int, CONVERT(char(8), @CurrentDate, 112)),
+                    @CurrentDate,
+                    DAY(@CurrentDate),
+                    MONTH(@CurrentDate),
+                    DATENAME(month, @CurrentDate),
+                    YEAR(@CurrentDate)
+                )
+            END
+
+            -- Move to the next calendar day
+            SET @CurrentDate = DATEADD(day, 1, @CurrentDate)
         END
 
         COMMIT TRANSACTION
@@ -43,7 +54,35 @@ BEGIN
     BEGIN CATCH
         IF XACT_STATE() <> 0
             ROLLBACK TRANSACTION
+
         THROW
     END CATCH
 END
 GO
+DECLARE @StartDate date, @EndDate date;
+
+SELECT
+    @StartDate = MIN(DateValue),
+    @EndDate = MAX(DateValue)
+FROM (
+    SELECT CAST(start_date AS date) AS DateValue FROM dbo.Rental
+    UNION ALL
+    SELECT CAST(end_date AS date) FROM dbo.Rental
+    UNION ALL
+    SELECT CAST(start_time AS date) FROM dbo.Maintenance
+    WHERE start_time IS NOT NULL
+    UNION ALL
+    SELECT CAST(end_time AS date) FROM dbo.Maintenance
+    WHERE end_time IS NOT NULL
+) AS AllDates;
+
+EXEC dbo.RebuildDimDate
+    @StartDate = @StartDate,
+    @EndDate = @EndDate;
+
+SELECT *
+FROM dbo.DimDate
+WHERE [date] BETWEEN '2026-11-01' AND '2026-11-30'
+ORDER BY [date];
+
+
