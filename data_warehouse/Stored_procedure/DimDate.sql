@@ -72,3 +72,29 @@ BEGIN
     END CATCH
 END
 GO
+
+
+-- run this after the FactMaintenance procedure if it doesn't work
+DECLARE @StartDate date;
+DECLARE @EndDate date;
+
+SELECT
+    @StartDate = MIN(event_date),
+    @EndDate = MAX(event_date)
+FROM (
+    SELECT CAST(start_time AS date) AS event_date
+    FROM dbo.Maintenance
+    WHERE start_time IS NOT NULL
+
+    UNION ALL
+
+    SELECT CAST(end_time AS date)
+    FROM dbo.Maintenance
+    WHERE end_time IS NOT NULL
+      AND CAST(end_time AS date) <> '9999-12-31'
+) AS dates;
+
+IF @StartDate IS NOT NULL
+    EXEC dbo.RebuildDimDate
+        @StartDate = @StartDate,
+        @EndDate = @EndDate;
