@@ -1,0 +1,2 @@
+--EXECDimEquipment
+EXEC dbo.LoadDimEquipment;
